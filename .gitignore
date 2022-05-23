@@ -1,0 +1,5 @@
+.idea
+*.py[cod]
+venv/
+build/
+__pychache__/

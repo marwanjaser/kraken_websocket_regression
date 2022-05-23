@@ -25,6 +25,16 @@ Json schemas supporting the Kraken WebSocket API message types and their corresp
 messages/schemas.py
 ```
 
+## Install
+
+Pre-requisites: Docker engine to build the image from the Dockerfile
+```bash
+docker build -t kraken-test .
+```
+
+```bash
+docker run kraken-test
+```
 
 ## Usage
 

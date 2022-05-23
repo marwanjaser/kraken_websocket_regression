@@ -1,0 +1,219 @@
+Project Title:
+---------------
+Regression Test Suite for the Kraken WebSocket API
+
+Project Motivation:
+--------------------
+The project has been created as part of the assessment process applying to the job posting of "Trading Technology SDET Assessment" at Kraken.
+
+Language: Python
+Test Framework: Pytest
+
+
+Project Implementation:
+------------------------
+The main request of the project was to built Regression Test Cases for the Kraken WebSocket API, however, to do so
+several modules had to be created first to in order to build a scalable and reusable code.
+
+The class KrakenWebSocket is created to:
+ Filename: kraken_websocket.py
+ - Create and connect a websocket
+ - To send and receive messages through the websocket
+   - Note, multi-threading was applied to continuously receive any incoming messages on the connected websocket
+ - To decode and store messages in their corresponding feed queues
+
+The classes PublicMessages and GeneralMessages (among others) provide access to modules for performing actions on the feed message (object).
+  Filename: messages/ks_messages.py
+ - Extract information, e.g. ChannelID, ChannelName, Payload, Pair, etc.
+ - Retrieve data structure of a message to access the desired fields within the message
+ - Validate the received feed message against json schemas
+ - Check Subscription Status and message contents
+
+The json schemas were created and are used to validate the received feed messages:
+  Filename: messages/schemas.py
+  - File used to test feed message against pre-defined schemas.
+    - This component is vital to ensure message contents and data structures are in the expected order per the API documentation
+
+Regression Test Cases:
+-----------------------
+A total of 14 test cases have been devised to run and test the Kraken WebSocket API, the following are the details of each of the test cases:
+  Filename: test_ks_websocket.py
+
+    Test Case#1: test_subscribe_to_public_channel
+        Test Scenario:
+        Send a subscribe message to all public channels, including, 'ohlc', 'book', 'trade', 'ticker', 'spread'
+
+        Validation Criteria:
+        - The received SubscriptionStatus message should indicate successful subscription and is validated field by field
+        - The time between sending a subscribe message to receiving a SubscriptionStatus message is expected to be
+        less than 5 seconds on the socket
+
+        Test Category:
+        - Functional and Performance testing
+
+    Test Case#2: test_subscribe_to_incorrect_channel
+        Test Scenario:
+        Send a subscribe message to an invalid channel name, i.e. 'fake'
+
+        Validation Criteria:
+        - The received SubscriptionStatus message should indicate unsuccessful subscription and is validated field by field
+        - The time between sending a subscribe message to receiving a SubscriptionStatus message is expected to be
+        less than 5 seconds on the socket
+
+        Test Category:
+        - Functional and Performance testing
+
+    Test Case#3: test_subscribe_with_incorrect_field
+        Test Scenario:
+        Send a subscribe message to a public channel, adding the optional field 'Interval'.
+        This field is only applicable to the 'ohlc' channel.
+
+        Validation Criteria:
+        if channel == ohlc:
+            - The received SubscriptionStatus message should indicate successful subscription
+        else:
+            - The received SubscriptionStatus message should indicate successful subscription
+
+        Test Category:
+        - Functional and Performance testing
+
+    Test Case#4: test_subscribe_with_wrong_pair_field
+        Test Scenario:
+        Send a subscribe message to each public channel with wrong input on pair field. The WebSocket API expects a list
+        to be provided. Instead, a string will be provided.
+        This is expected to trigger an error on the subscription status message
+
+        Validation Criteria:
+        - The received SubscriptionStatus message should indicate unsuccessful subscription and is validated field by field
+        - The time between sending a subscribe message to receiving a SubscriptionStatus message is expected to be
+        less than 5 seconds on the socket
+
+        Test Category:
+        - Functional and Performance testing
+
+    Test Case#5: test_subscribe_to_public_channel_multi_pairs
+        Test Scenario:
+        Send a subscribe message to all available public channels, including, 'ohlc', 'book', 'trade', 'ticker', 'spread'
+        with multiple pairs, e.g. XBT/USD and ETH/EUR
+
+        Validation Criteria:
+        - A SubscriptionStatus message is expected to be received for each of the pairs
+        - Validate the contents of the SubscriptionStatus message
+
+        Test Category:
+        - Functional testing
+
+    Test Case#6: test_subscribe_to_public_channel_incorrect_pair
+        Test Scenario:
+        Send a subscribe message to all available public channels, including, 'ohlc', 'book', 'trade', 'ticker', 'spread'
+        with an incorrect pair, e.g. MAG/USD
+
+        Validation Criteria:
+        - A SubscriptionStatus message will indicate an error "Currency pair not supported MAG/USD"
+        - Validate the contents of the SubscriptionStatus message
+
+        Test Category:
+        - Functional testing
+
+    Test Case#7: test_subscribe_to_public_channel_multi_pair_incorrect_and_correct
+        Test Scenario:
+        Send a subscribe message to all available public channels, including, 'ohlc', 'book', 'trade', 'ticker', 'spread'
+        with an array of pairs that include a supported and another unsupported pair, e.g. MAG/USD and XBT/USD
+
+        Validation Criteria:
+        - Expected to receive two SubscriptionStatus messages
+        - 1st SubscriptionStatus message will indicate an error "Currency pair not supported MAG/USD" for MAG/USD pair
+        - 2nd SubscriptionStatus message will indicate successful subscription to the supported pair XBT/USD
+        - Validate the contents of the SubscriptionStatus messages
+
+        Test Category:
+        - Functional testing
+
+    Test Case#8: test_unsubscribe_to_public_channel
+        Test Scenario:
+        Send a subscribe message to the 'book' public channel
+        Wait for incoming feed within 20seconds or until we reach 20 messages are available in the feed queue
+        Send unsubscribe message for the same channel
+
+        Validation criteria:
+        - Validate the contents of the unsubscribe message
+        - Validate that the feed stops/halts after unsubscribing to a given channel, i.e. feed queue should not increase
+
+        Test Category:
+        - Functional testing
+
+    Test Case#9: test_increasing_epoch_on_spread_feed
+        Test Scenario:
+        Subscribe to the spread channel and compare the epoch on incoming feeds.
+        Wait for at least a number of messages are available in the feed queue
+
+        Validation Criteria:
+        - Check if SubscriptionStatus and Spread feed messages are seen on the socket/channel
+        - Check if epoch on subsequent messages in the 'spread' feed queue are an increasing order
+
+        Test Category:
+        - Functional testing
+
+    Test Case#10: test_increasing_epoch_on_trade_feed
+        Test Scenario:
+        Subscribe to the trade channel and compare the epoch on incoming feeds.
+        Wait until at least 3 messages are available in the feed queue for comparison and validation
+        Note: Trade message contains an array of trade/s, each trade with it's own timestamp
+
+        Validation Criteria:
+        - Compare the min epoch of latest feed is greater than or equal to the max epoch of previous feed in the queue
+
+        Test Category:
+        - Functional testing
+
+    Test Case#11: test_book_ask_bid_price_and_depth_level
+        Test Scenario:
+        - Subscribe to the book channel and wait for the first message to arrive (snapshot message)
+        - Repeat the test for different depth_levels [10, 25, 100, 500, 1000]
+
+        Validation Criteria:
+        - Ask price list is in ascending order, i.e. best ask price on top
+        - Bid price list is in descending order, i.e. best bid price on top
+        - Check depth parameter is effective against the received book message, depth_levels [10, 25, 100, 500, 1000]
+        - Validate that the best ask price > best big price. Failure to meet this condition could be an indication of matching engine failure
+
+        Test Category:
+        - Functional testing
+
+    Test Case#12: test_book_ask_bid_price_and_volume_updates
+        Test Scenario:
+        - Subscribe to the book channel and collect feeds for 60 seconds
+
+        Validation Criteria:
+        - Validate that number of update messages received is > 0
+        - Validate that there is at least one update message related to the best bid price level and best ask price levels
+        - Validate that the epoch on the update message for a given price level is greater than that of the last known epoch for the same price level
+        - Bid price list is in descending order, i.e. best bid price on top
+        - Validate that the volume field in the update messages is >= 0
+
+        Test Category:
+        - Functional testing
+
+    Test Case#13: test_public_channel_schema_validation
+        Test Scenario:
+        - Subscribe to a public channel and validate the received public message/s to ensure that they match the json schema
+        - Wait for 20 seconds to allow for more incoming messages to be added to the feed queue
+
+        Validation Criteria:
+        - Perform Json Schema validation against each message in the feed of the corresponding public channel
+        - Perform Data Structure validation against each message in the feed of the corresponding public channel
+
+        Test Category:
+        - Functional testing
+
+    Test Case#14: test_public_channel_schema_validation
+        Test Scenario:
+        - Subscribe to a public channel and wait to receive the SubscriptionStatus message
+
+        Validation Criteria:
+        - Perform Json Schema validation against the SubscriptionStatus message
+
+        Test Category:
+        - Functional testing
+
+*Note: Stress testing was not performed since one of the assignment requirements is not to send large number of requests, large number of connection requests, etc.

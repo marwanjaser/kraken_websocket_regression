@@ -12,31 +12,37 @@ Test Framework: Pytest
 
 Project Implementation:
 ------------------------
-The main request of the project was to built Regression Test Cases for the Kraken WebSocket API, however, to do so
-several modules had to be created first to in order to build a scalable and reusable code.
+The main requirement of this project is to build a Regression Test Suite to test the Kraken WebSocket API. However, to do so
+several modules had to be created first in order to build a scalable and reusable code.
 
 The class KrakenWebSocket is created to:
  Filename: kraken_websocket.py
- - Create and connect a websocket
+ - Create and connect to a websocket
  - To send and receive messages through the websocket
    - Note, multi-threading was applied to continuously receive any incoming messages on the connected websocket
- - To decode and store messages in their corresponding feed queues
+ - To decode and store messages in their corresponding feed queues, based on the channelName and pair
 
 The classes PublicMessages and GeneralMessages (among others) provide access to modules for performing actions on the feed message (object).
   Filename: messages/ks_messages.py
  - Extract information, e.g. ChannelID, ChannelName, Payload, Pair, etc.
- - Retrieve data structure of a message to access the desired fields within the message
- - Validate the received feed message against json schemas
- - Check Subscription Status and message contents
+ - Retrieve the data structure of a message to access the desired fields within the message
+ - Validate the received feed message/s against their corresponding JSON schemas
+ - Validate the SubscriptionStatus message contents
 
-The json schemas were created and are used to validate the received feed messages:
+The JSON schemas were created and are used to validate the received feed messages:
   Filename: messages/schemas.py
   - File used to test feed message against pre-defined schemas.
-    - This component is vital to ensure message contents and data structures are in the expected order per the API documentation
+    - This component is vital to ensure message contents and data structures are in the expected order per the API documentation.
+    - Potential code refactoring may introduce changes in the API message stream, the JSON schemas will ensure the structure is consistent and will flag any violations.
+
 
 Regression Test Cases:
 -----------------------
-A total of 14 test cases have been devised to run and test the Kraken WebSocket API, the following are the details of each of the test cases:
+A total of 14 test cases have been devised to run and test the Kraken WebSocket API, in this section, each test scenario and validation criteria are specified illustrating the
+approach and methodology.
+
+The test cases cover functional and performance related validation and testing. Note that stress testing was not performed since one of the assignment requirements is not to send large number of requests, nor large number of connection requests, etc.
+
   Filename: test_ks_websocket.py
 
     Test Case#1: test_subscribe_to_public_channel
@@ -154,6 +160,15 @@ A total of 14 test cases have been devised to run and test the Kraken WebSocket 
         Test Category:
         - Functional testing
 
+        *Note: In few occasions this test case would fail due to epoch on latest arriving message in the spread feed queue being less than the previous message in the queue. The following is a snapshot highlighting such incident.
+        test_ks_websocket.py::test_increasing_epoch_on_spread_feed Testing Channel: spread
+        Checking Connection Status
+        Connection Status: Online
+        Received subscription status and feed message for channelID: spread_XBT/USD
+        New epoch: 1653281482.155495 is higher or equal to previous epoch: 1653281481.774162, delta:0.3813328742980957
+        New epoch: 1653281481.774162 is less than previous epoch: 1653281482.155495, delta:-0.3813328742980957
+        FAILED
+
     Test Case#10: test_increasing_epoch_on_trade_feed
         Test Scenario:
         Subscribe to the trade channel and compare the epoch on incoming feeds.
@@ -216,4 +231,8 @@ A total of 14 test cases have been devised to run and test the Kraken WebSocket 
         Test Category:
         - Functional testing
 
-*Note: Stress testing was not performed since one of the assignment requirements is not to send large number of requests, large number of connection requests, etc.
+Test Summary:
+---------------
+- Number of test cases passing 14
+- Total duration of regression test: 312.76 seconds (00:05:12)
+======================== 14 passed in 312.67s (0:05:12) ========================

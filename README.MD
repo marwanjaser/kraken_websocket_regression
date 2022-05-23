@@ -3,24 +3,26 @@
 This is a regression test suite built to validate the [Kraken WebSocket API](https://docs.kraken.com/websockets/#book-checksum)
  
 ### Project Structure:
-File contains KrakenWebSocket API handler is built in this file, to create, send, receive, decode, store messages received on the WebSocket
+For more details on project structure and contents, please refer to NOTES.txt file.
+
+File Description: File contains the KrakenWebSocket API class handler. The object will create, send, receive, decode, store messages received on the WebSocket.
 ```bash
 kraken_websocket.py
 ```
 
-File contains a list of test cases that will be called using the pytest module. Test case named def test_<> will be called by the pytest
+File Description: File contains a list of test cases that will be called using the pytest module. Test case named def test_<> will be called by the pytest
 
 ```bash
 test_ks_websocket.py
 ```
 
-Kraken message types are defined in this file
+File Description: Kraken message types are defined in this file
 
 ```bash
 messages/ks_messages.py
 ```
 
-Json schemas supporting the Kraken WebSocket API message types and their corresponding data structures
+File Description: Json schemas supporting the Kraken WebSocket API message types and their corresponding data structures
 ```bash
 messages/schemas.py
 ```

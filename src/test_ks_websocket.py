@@ -726,7 +726,7 @@ def test_book_ask_bid_price_and_volume_updates():
         time_now = datetime.now()
 
     if subscription_channel_msg_found:
-        wait_time = 60
+        wait_time = 120
         print('Waiting {} seconds for incoming feed on the {} channel'.format(wait_time, channel))
         time.sleep(wait_time)
         ks.unsubscribe(channel)  # unsubscribe to stop incoming feed and perform validation on queued messages

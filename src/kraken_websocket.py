@@ -55,10 +55,9 @@ class KrakenWebSocket:
             while self.connection_state:
                 try:
                     self.ws_rcv()
-                except websocket.WebSocketConnectionClosedException as e:
+                except (websocket.WebSocketConnectionClosedException , Exception) as e:
                     self.connection_state = False
             self.ws.close()
-            # print("Stopping Thread...")
         _thread.start_new_thread(run, ())
 
     def ws_decode_and_store(self, message):
